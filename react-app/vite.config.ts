@@ -16,4 +16,8 @@ export default defineConfig({
             "@": path.resolve(__dirname, "./src"),
         },
     },
+    preview: {
+        allowedHosts: "group-planner-app-production.up.railway.app",
+        host: "0.0.0.0",
+    },
 });
