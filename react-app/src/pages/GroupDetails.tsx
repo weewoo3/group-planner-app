@@ -69,7 +69,7 @@ const GroupDetails = () => {
 
     const handleActivitySelect = useCallback((activityId: string, activityTitle: string) => {
         // Only allow selection if user is creator and group not finalized
-        if (user && group && user.id === group.creatorId && groupStatus.toUpperCase() === "FINALIZED") {
+        if (user && group && user.id === group.creatorId && groupStatus.toUpperCase() !== "FINALIZED") {
             setSelectedActivityId(activityId);
             setSelectedActivityTitle(activityTitle);
         }
@@ -155,7 +155,7 @@ const GroupDetails = () => {
                         Proposed Activities
                     </Typography>
                     {/** Only show "Add Activity" button if user is a member and group not finalized */}
-                    {groupStatus.toUpperCase() === "FINALIZED" && (
+                    {groupStatus.toUpperCase() !== "FINALIZED" && (
                         <Button
                             variant="contained"
                             onClick={() => setCreateActivityOpen(true)}
