@@ -17,7 +17,7 @@ export default defineConfig({
         },
     },
     preview: {
-        allowedHosts: "group-planner-app-production.up.railway.app",
+        allowedHosts: ["group-planner-app-production.up.railway.app"],
         host: "0.0.0.0",
     },
 });
