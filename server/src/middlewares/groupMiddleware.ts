@@ -73,7 +73,7 @@ export const isGroupCreator = asyncHandler(async (req: Request, res: Response, n
  * Usage: router.post('/:id/activities', protect, isGroupMember, preventFinalizedModifications, handler)
  */
 export const preventFinalizedModifications = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-    if (req.group!.status === "Finalized") {
+    if (req.group!.status.toUpperCase() === "FINALIZED") {
         throw new AppError("Cannot modify a finalized group", 400);
     }
 

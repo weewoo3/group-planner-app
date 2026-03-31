@@ -76,7 +76,7 @@ const AdminControls = ({
     };
 
     // Don't show admin controls if already finalized
-    if (groupStatus === "Finalized") {
+    if (groupStatus.toUpperCase() === "FINALIZED") {
         return (
             <Paper sx={{ p: 2, bgcolor: "success.light", borderRadius: 2 }}>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>

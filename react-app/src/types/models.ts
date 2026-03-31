@@ -34,8 +34,9 @@ export type Activity = {
     proposedTime: string;
     isWinner: boolean;
     createdAt: string;
+    hasVoted?: boolean;
     _count: {
         votes: number;
     };
-    user: User
-}
+    user: User;
+};

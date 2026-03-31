@@ -13,6 +13,7 @@ import axios from "axios";
 import { getAllActivities } from "@/features/activities/api/get-all-activities";
 import type { Activity } from "@/types/models";
 import ActivityCard from "./ActivityCard";
+import { addVote, removeVote } from "@/features/activities/api/vote-activity";
 
 interface ActivitiesListProps {
     groupId: string;
@@ -21,10 +22,16 @@ interface ActivitiesListProps {
     onGroupStatusChange?: (status: string) => void;
 }
 
-const ActivitiesList = ({ groupId, onActivitySelect, selectedActivityId, onGroupStatusChange }: ActivitiesListProps) => {
+const ActivitiesList = ({
+    groupId,
+    onActivitySelect,
+    selectedActivityId,
+    onGroupStatusChange,
+}: ActivitiesListProps) => {
     const [activities, setActivities] = useState<Activity[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [groupStatus, setGroupStatus] = useState<string>("");
 
     useEffect(() => {
         const loadActivities = async (groupId: string) => {
@@ -33,17 +40,22 @@ const ActivitiesList = ({ groupId, onActivitySelect, selectedActivityId, onGroup
                 setError(null);
 
                 const res = await getAllActivities(groupId);
-                const activities = res.data.activities;
-                const groupStatus = (res.data as any).groupStatus;
+                const status = (res.data as any).groupStatus;
+
+                const activities = res.data.activities.map((a: any) => ({
+                    ...a,
+                    hasVoted: Array.isArray(a.votes) && a.votes.length > 0,
+                }));
 
                 setActivities(activities);
-                
-                if (onGroupStatusChange && groupStatus) {
-                    onGroupStatusChange(groupStatus);
+                setGroupStatus(status);
+
+                if (onGroupStatusChange && status) {
+                    onGroupStatusChange(status);
                 }
             } catch (err: unknown) {
                 let message = "Failed to fetch activities.";
-                
+
                 if (axios.isAxiosError(err) && err.response?.data?.message) {
                     message = err.response.data.message;
                 }
@@ -56,6 +68,53 @@ const ActivitiesList = ({ groupId, onActivitySelect, selectedActivityId, onGroup
 
         loadActivities(groupId);
     }, [groupId, onGroupStatusChange]);
+
+    const handleVote = async (activityId: string, currentlyVoted: boolean) => {
+        // Prevent voting if the group is finalized
+        if (groupStatus.toUpperCase() === "FINALIZED") return;
+
+        setActivities((prev) =>
+            prev.map((a) =>
+                a.id === activityId
+                    ? {
+                          ...a,
+                          hasVoted: !currentlyVoted,
+                          _count: {
+                              ...a._count,
+                              votes: currentlyVoted
+                                  ? Math.max(0, a._count.votes - 1)
+                                  : a._count.votes + 1,
+                          },
+                      }
+                    : a,
+            ),
+        );
+
+        try {
+            if (currentlyVoted) {
+                await removeVote(groupId, activityId);
+            } else {
+                await addVote(groupId, activityId);
+            }
+        } catch {
+            setActivities((prev) =>
+                prev.map((a) =>
+                    a.id === activityId
+                        ? {
+                              ...a,
+                              hasVoted: currentlyVoted,
+                              _count: {
+                                  ...a._count,
+                                  votes: currentlyVoted
+                                      ? a._count.votes + 1
+                                      : Math.max(0, a._count.votes - 1),
+                              },
+                          }
+                        : a,
+                ),
+            );
+        }
+    };
 
     return (
         <>
@@ -78,7 +137,7 @@ const ActivitiesList = ({ groupId, onActivitySelect, selectedActivityId, onGroup
                     {activities.map((activity) => {
                         const isWinner = activity.isWinner === true;
                         const isSelected = selectedActivityId === activity.id;
-                        
+
                         return (
                             <ListItem
                                 key={activity.id}
@@ -95,10 +154,12 @@ const ActivitiesList = ({ groupId, onActivitySelect, selectedActivityId, onGroup
                                     transition: "all 0.2s",
                                     position: "relative",
                                     overflow: "hidden",
-                                    "&:hover": onActivitySelect ? {
-                                        boxShadow: 6,
-                                        transform: "scale(1.01)",
-                                    } : {},
+                                    "&:hover": onActivitySelect
+                                        ? {
+                                              boxShadow: 6,
+                                              transform: "scale(1.01)",
+                                          }
+                                        : {},
                                 }}
                             >
                                 <ListItemAvatar>
@@ -106,7 +167,12 @@ const ActivitiesList = ({ groupId, onActivitySelect, selectedActivityId, onGroup
                                         <Hiking />
                                     </Avatar>
                                 </ListItemAvatar>
-                                <ActivityCard activity={activity} />
+                                <ActivityCard
+                                    activity={activity}
+                                    onVote={handleVote}
+                                    isVoted={activity.hasVoted === true}
+                                    disabled={groupStatus.toUpperCase() === "FINALIZED"}
+                                />
                                 {isWinner && (
                                     <Typography
                                         component="div"

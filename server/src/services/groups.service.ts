@@ -204,7 +204,7 @@ export class GroupService {
      * This combines two operations: setting the winner and finalizing the group.
      * @param groupId - ID of the group to finalize
      * @param activityId - ID of the activity to mark as winner
-     * @returns Updated group with status "Finalized"
+     * @returns Updated group with status "FINALIZED"
      */
     async finalizeGroup(groupId: string, activityId: string) {
         return prisma.$transaction(async (tx) => {
@@ -230,7 +230,7 @@ export class GroupService {
                 throw new AppError("Group not found", 404);
             }
 
-            if (group.status === "Finalized") {
+            if (group.status.toUpperCase() === "FINALIZED") {
                 throw new AppError("Group is already finalized", 400);
             }
 
@@ -249,7 +249,7 @@ export class GroupService {
             // Update group status to Finalized
             return tx.group.update({
                 where: { id: groupId },
-                data: { status: "Finalized" },
+                data: { status: "FINALIZED" },
             });
         });
     }
