@@ -165,6 +165,7 @@ const CreateActivityDialog = ({ open, onClose, groupId, loadGroupDetails }: Crea
             if (!res.success) {
                 const message = res.message || "Failed to create activity.";
                 setError(message);
+                setLoading(false);
                 return;
             }
             
@@ -187,7 +188,6 @@ const CreateActivityDialog = ({ open, onClose, groupId, loadGroupDetails }: Crea
             }
 
             setError(message);
-        } finally {
             setLoading(false);
         }
     }
